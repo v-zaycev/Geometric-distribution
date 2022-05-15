@@ -5,7 +5,7 @@
 #include<random>
 #include"PROBDIST.H"
 
-class Hypergeom_distr
+class Hypergeom_distr_0
 {
 private:
 	int a = 10, b = 10, k = 10;
@@ -24,9 +24,9 @@ private:
 	double* power_n = nullptr;
 	double p_lvl_distr[101];
 public:
-	Hypergeom_distr(){}
-	Hypergeom_distr(int a_, int b_, int k_) :a{ a_ }, b{ b_ }, k{ k_ }, h_a{ a_ }, h_b{ b_ }, h_k{ k_ }{}
-	~Hypergeom_distr();
+	Hypergeom_distr_0(){}
+	Hypergeom_distr_0(int a_, int b_, int k_) :a{ a_ }, b{ b_ }, k{ k_ }, h_a{ a_ }, h_b{ b_ }, h_k{ k_ }{}
+	~Hypergeom_distr_0();
 
 	void set_param(int a, int b, int k, int n);
 
@@ -62,18 +62,87 @@ public:
 	void power_n_dependence();
 };
 
-class Hypergeom_distr_inv : public Hypergeom_distr
+class Hypergeom_distr_inv : public Hypergeom_distr_0
 {
 public:
-	Hypergeom_distr_inv(int _a, int _b, int _k) :Hypergeom_distr(_a, _b, _k) {}
+	Hypergeom_distr_inv(int _a, int _b, int _k) :Hypergeom_distr_0(_a, _b, _k) {}
 	~Hypergeom_distr_inv(){}
 	virtual int* gen_distr(int a, int b, int k, int test_nmb);
 };
 
-class Hypergeom_distr_bern : public Hypergeom_distr
+class Hypergeom_distr_bern : public Hypergeom_distr_0
 {
 public:
-	Hypergeom_distr_bern(int _a, int _b, int _k):Hypergeom_distr(_a,_b,_k){}
+	Hypergeom_distr_bern(int _a, int _b, int _k):Hypergeom_distr_0(_a,_b,_k){}
 	~Hypergeom_distr_bern() {};
 	virtual int* gen_distr(int a, int b, int k, int test_nmb);
+};
+
+
+class Hypergeom_distr
+{
+private:
+	int a, b, k;
+	double* probs;
+public:
+	Hypergeom_distr() :a(0), b(0), k(0), probs(nullptr) {};
+	Hypergeom_distr(int _a, int _b, int _k) :a(_a), b(_b), k(_k), probs(nullptr) {};
+	~Hypergeom_distr() { delete[] probs; };
+	void set_param(int _a, int _b, int _k);
+	void calc_probs();
+	int get_k() { return k; }
+	const double* get_probs() { return probs; };
+};
+
+class Hypergeom_sample
+{
+protected:
+	int* sim_freq;
+	int sample_sz;
+	int a, b, k;
+public:
+	Hypergeom_sample() :sample_sz(0),a(0),b(0), k(0), sim_freq(nullptr) {};
+	Hypergeom_sample(int _n, int _a, int _b, int _k) :sample_sz(_n), a(_a), b(_b), k(_k), sim_freq(nullptr) {};
+	virtual ~Hypergeom_sample() { delete[] sim_freq; };
+	virtual void gen_sample()=0;
+	void set_param(int _a, int _b, int _k, int _n);
+	int get_n() { return sample_sz; }
+	int get_k() { return k; }
+	const int* get_sim_freq() { return sim_freq; };
+};
+
+class Hypergeom_inv : public Hypergeom_sample
+{
+public:
+	Hypergeom_inv() :Hypergeom_sample() {};
+//	Hypergeom_inv(int n, int k) :Hypergeom_sample(n,k) {};
+	virtual void gen_sample();
+};
+
+class Hypergeom_bern : public Hypergeom_sample
+{
+public:
+	Hypergeom_bern() :Hypergeom_sample() {};
+	Hypergeom_bern(int n, int a, int b, int k) :Hypergeom_sample(n,a,b,k) {};
+	virtual void gen_sample();
+};
+
+class Chi_sq
+{
+private:
+	Hypergeom_sample* sample_generator;
+	Hypergeom_distr* h0;
+	Hypergeom_distr* h1;
+	double chi_sq;
+	double p_val;
+	double alpha;
+	int d_f;
+	double p_lvls[101];
+public:
+	Chi_sq(Hypergeom_sample* sim, Hypergeom_distr* _h0, Hypergeom_distr* _h1 = nullptr) {};
+	~Chi_sq();
+	void setData(Hypergeom_sample* sim, Hypergeom_distr* h0);
+	double calc_p_val();
+	void gen_p_levels();
+	
 };

@@ -29,7 +29,7 @@ public:
 
 // Implementation
 public:
-	virtual ~CGeomdistrDoc();
+	virtual ~CGeomdistrDoc() { delete generator; }
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
@@ -47,7 +47,7 @@ protected:
 #endif // SHARED_HANDLERS
 
 public:
-	Hypergeom_distr* generator = nullptr;
+	Hypergeom_distr_0* generator = nullptr;
 	int a_0=10, b_0=10, k_0=10;
 	int a_1=10, b_1=10, k_1=10;
 	int n=10'000;

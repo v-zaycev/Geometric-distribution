@@ -42,9 +42,6 @@ CGeomdistrDoc::CGeomdistrDoc() noexcept
 
 }
 
-CGeomdistrDoc::~CGeomdistrDoc()
-{
-}
 
 BOOL CGeomdistrDoc::OnNewDocument()
 {
@@ -177,7 +174,6 @@ void CGeomdistrDoc::OnSetparameters()
 		
 		generator->set_param(a_0, b_0, k_0, n);
 	}
-	// TODO: Add your command handler code here
 }
 
 void CGeomdistrDoc::OnCalcPVal()

@@ -84,6 +84,9 @@ void CGeomdistrView::OnDraw(CDC* pDC)
 	{
 		if (!pDoc->generator)
 			break;
+		if (!pDoc->generator->get_gen_distr())
+			break;
+
 		const double* th_distr = pDoc->generator->get_th_distr();
 		const int* mod_distr = pDoc->generator->get_gen_distr();
 		double max_val = 0;
@@ -118,7 +121,7 @@ void CGeomdistrView::OnDraw(CDC* pDC)
 
 		pDC->SelectObject(pen_axis);
 
-		// строим оси
+		// axis
 		pDC->MoveTo(x_0, y_1);
 		pDC->LineTo(x_1, y_1);
 
@@ -185,7 +188,7 @@ void CGeomdistrView::OnDraw(CDC* pDC)
 
 		pDC->SelectObject(pen_axis);
 
-		// строим оси
+		// axis
 		pDC->MoveTo(x_0, y_1);
 		pDC->LineTo(x_1, y_1);
 
@@ -238,6 +241,9 @@ void CGeomdistrView::OnDraw(CDC* pDC)
 		if (!pDoc->generator)
 			break;
 
+		if (!pDoc->generator->get_power_n())
+			break;
+
 		const double* power_n_dep = pDoc->generator->get_power_n();
 		const int n_steps = pDoc->generator->get_steps();
 		double step = out_sp_x / n_steps;
@@ -261,7 +267,7 @@ void CGeomdistrView::OnDraw(CDC* pDC)
 
 		pDC->SelectObject(pen_axis);
 
-		// строим оси
+		// axis
 		pDC->MoveTo(x_0, y_1);
 		pDC->LineTo(x_1, y_1);
 
