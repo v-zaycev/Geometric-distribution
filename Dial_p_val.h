@@ -24,7 +24,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	BOOL type;
-	int sample_sz_p_val;
+	int samples_nmb;
 	int sample_sz;
 	int a;
 	int b;

@@ -85,11 +85,13 @@ private:
 	int a, b, k;
 	double* probs;
 public:
-	Hypergeom_distr() :a(0), b(0), k(0), probs(nullptr) {};
+	Hypergeom_distr() :a(10), b(10), k(10), probs(nullptr) {};
 	Hypergeom_distr(int _a, int _b, int _k) :a(_a), b(_b), k(_k), probs(nullptr) {};
 	~Hypergeom_distr() { delete[] probs; };
 	void set_param(int _a, int _b, int _k);
 	void calc_probs();
+	int get_a() { return a; }
+	int get_b() { return b; }
 	int get_k() { return k; }
 	const double* get_probs() { return probs; };
 };
@@ -101,13 +103,20 @@ protected:
 	int sample_sz;
 	int a, b, k;
 public:
-	Hypergeom_sample() :sample_sz(0),a(0),b(0), k(0), sim_freq(nullptr) {};
-	Hypergeom_sample(int _n, int _a, int _b, int _k) :sample_sz(_n), a(_a), b(_b), k(_k), sim_freq(nullptr) {};
+	Hypergeom_sample() :sample_sz(1000),a(10),b(10), k(10), sim_freq(nullptr) {};
+	Hypergeom_sample(const Hypergeom_sample& smpl);
+	Hypergeom_sample(int _a, int _b, int _k, int _n = 100) :sample_sz(_n), a(_a), b(_b), k(_k), sim_freq(nullptr) {};
 	virtual ~Hypergeom_sample() { delete[] sim_freq; };
 	virtual void gen_sample()=0;
-	void set_param(int _a, int _b, int _k, int _n);
+	virtual Hypergeom_sample* copy()=0;
+	void set_all(int _a, int _b, int _k, int _n);
+	void set_param(int _a, int _b, int _k);
+	void set_sz(int sz) { sample_sz = sz; };
 	int get_n() { return sample_sz; }
+	int get_a() { return a; }
+	int get_b() { return b; }
 	int get_k() { return k; }
+	virtual int get_type() = 0;
 	const int* get_sim_freq() { return sim_freq; };
 };
 
@@ -115,34 +124,127 @@ class Hypergeom_inv : public Hypergeom_sample
 {
 public:
 	Hypergeom_inv() :Hypergeom_sample() {};
-//	Hypergeom_inv(int n, int k) :Hypergeom_sample(n,k) {};
+	Hypergeom_inv(const Hypergeom_inv& a) :Hypergeom_sample(a) {};
+	Hypergeom_inv(int a, int b, int k, int n = 100) :Hypergeom_sample(a, b, k, n) {};
 	virtual void gen_sample();
+	virtual int get_type() { return 0; };
+	virtual Hypergeom_sample* copy() { return new Hypergeom_inv(*this); };
+	virtual ~Hypergeom_inv(){};
 };
 
 class Hypergeom_bern : public Hypergeom_sample
 {
 public:
 	Hypergeom_bern() :Hypergeom_sample() {};
-	Hypergeom_bern(int n, int a, int b, int k) :Hypergeom_sample(n,a,b,k) {};
+	Hypergeom_bern(const Hypergeom_inv& a) :Hypergeom_sample(a) {};
+	Hypergeom_bern(int a, int b, int k, int n = 100) :Hypergeom_sample(a, b, k, n) {};
 	virtual void gen_sample();
+	virtual int get_type() { return 1; };
+	virtual Hypergeom_sample* copy() { return new Hypergeom_bern(*this); };
+	virtual ~Hypergeom_bern() {};
 };
 
 class Chi_sq
 {
 private:
-	Hypergeom_sample* sample_generator;
-	Hypergeom_distr* h0;
-	Hypergeom_distr* h1;
 	double chi_sq;
 	double p_val;
+	double power;
 	double alpha;
 	int d_f;
+	int sample_sz;
+	int samples_nmb;
 	double p_lvls[101];
+	double* power_n_dep;
+	int start_sz, steps_nmb, step_sz, power_n_samples_nmb;
+
 public:
-	Chi_sq(Hypergeom_sample* sim, Hypergeom_distr* _h0, Hypergeom_distr* _h1 = nullptr) {};
+	Chi_sq();
 	~Chi_sq();
-	void setData(Hypergeom_sample* sim, Hypergeom_distr* h0);
-	double calc_p_val();
-	void gen_p_levels();
-	
+
+	void set_p_lvls(int _sample_sz, int _samples_nmb, double _alpha);
+	void set_power_n(int _start_sz, int _steps_nmb, int _step_sz, int _power_n_samples_nmb, double _alpha);
+
+	double calc_p_val(Hypergeom_sample *smpl, Hypergeom_distr& h0);
+	double calc_power(double* vals, int sz);
+	void gen_p_levels(Hypergeom_sample* smpl, Hypergeom_distr& h0);
+	void power_n_dependence(Hypergeom_sample* smpl, Hypergeom_distr& h0);
+
+	double get_chi_sq() { return chi_sq; }
+	int get_d_f() { return d_f; }
+	double get_p_val() { return p_val; }
+	double get_power() { return power; }
+	double get_smpl_sz() { return sample_sz; }
+	double get_smpls_nmb() { return samples_nmb; }
+	double get_alpha() { return alpha; }
+	int get_start_pos() { return start_sz; }
+	int get_steps_nmb() { return steps_nmb; }
+	int get_power_n_samples_nmb() { return power_n_samples_nmb; }
+	int get_step_sz() { return step_sz; }
+	const double* get_p_levels() { return p_lvls; }
+	const double* get_power_n() { return power_n_dep; }
+
 };
+
+
+
+//class Chi_sq
+//{
+//private:
+//	Hypergeom_sample* sample_generator;
+//	Hypergeom_distr* h0;
+//	double chi_sq;
+//	double p_val;
+//	double power;
+//	double alpha;
+//	int d_f;
+//	int sample_sz;
+//	int samples_nmb;
+//	double p_lvls[101];
+//	double* power_n_dep;
+//	int start_sz, steps_nmb, step_sz, power_n_samples_nmb;
+//
+//public:
+//	Chi_sq();
+//	Chi_sq(Hypergeom_sample* smpl, Hypergeom_distr* _h0);
+//	~Chi_sq();
+//
+//	void set_new_generator(Hypergeom_sample* smpl) {
+//		delete sample_generator;
+//		sample_generator = smpl;
+//	}
+//	void set_generator_param(int a, int b, int k) { sample_generator->set_param(a, b, k); }
+//	void set_generator_all(int a, int b, int k, int sz)
+//	{
+//		sample_generator->set_param(a, b, k);
+//		sample_generator->set_sz(sz);
+//
+//	}
+//	void set_new_H0(Hypergeom_distr* _h0) {
+//		delete h0;
+//		h0 = _h0;
+//	}
+//	void set_H0_param(int a, int b, int k) { h0->set_param(a, b, k;) }
+//	void set_p_lvls(int _sample_sz, int _samples_nmb, double _alpha);
+//	void set_power_n(int _start_sz, int _steps_nmb, int _step_sz, int _power_n_samples_nmb, double _alpha);
+//
+//	double calc_p_val(Hypergeom_sample* smpl);
+//	double calc_power(double* vals, int sz);
+//	void gen_p_levels();
+//	void power_n_dependence();
+//
+//	int get_k() { return sample_generator->get_k(); }
+//	double get_chi_sq() { return chi_sq; }
+//	int get_d_f() { return d_f; }
+//	double get_p_val() { return p_val; }
+//	double get_power() { return power; }
+//	double get_alpha() { return alpha; }
+//	int get_init_pos() { return start_sz; }
+//	int get_steps() { return steps_nmb; }
+//	int get_step() { return step_sz; }
+//	const int* get_gen_freq() { return sample_generator->get_sim_freq(); }
+//	const double* get_distr() { return h0->get_probs(); }
+//	const double* get_p_levels() { return p_lvls; }
+//	const double* get_power_n() { return power_n_dep; }
+//
+//};

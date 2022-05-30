@@ -38,8 +38,12 @@ END_MESSAGE_MAP()
 
 CGeomdistrDoc::CGeomdistrDoc() noexcept
 {
-	// TODO: add one-time construction code here
+	generator = new Hypergeom_inv();
+}
 
+CGeomdistrDoc::~CGeomdistrDoc()
+{
+	delete generator;
 }
 
 
@@ -145,17 +149,12 @@ void CGeomdistrDoc::Dump(CDumpContext& dc) const
 
 void CGeomdistrDoc::OnSetparameters()
 {
-	Dial_basic d(type, a_0, b_0, k_0, n);
+	Dial_basic d(generator->get_type(), generator->get_a(), generator->get_b(), generator->get_k(), generator->get_n());
 
 
 	if (d.DoModal() == IDOK)
 	{
-		a_0 = d.a_val;
-		b_0 = d.b_val;
-		k_0 = d.k_val;
-		n = d.n_val;
-			
-		if (type != d.func_type||!generator)
+		if (!generator || generator->get_type() != d.func_type)
 		{
 			if (generator)
 			{
@@ -163,16 +162,13 @@ void CGeomdistrDoc::OnSetparameters()
 				generator = nullptr;
 			}
 			if (d.func_type == 0)
-				generator = new Hypergeom_distr_inv(a_0, b_0, k_0);
+				generator = new Hypergeom_inv(d.a_val, d.b_val, d.k_val, d.n_val);
 			else
-				generator = new Hypergeom_distr_bern(a_0, b_0, k_0);
-
-			generator->set_hypothesis(a_1, b_1, k_1, sample_sz, samples_nmb, alpha);
-			generator->set_power_n_param(init_sz, steps_nmb, step_sz, power_n_sample_sz);
+				generator = new Hypergeom_bern(d.a_val, d.b_val, d.k_val, d.n_val);
 		}
-		type = d.func_type;
-		
-		generator->set_param(a_0, b_0, k_0, n);
+		else
+			generator->set_all(d.a_val, d.b_val, d.k_val, d.n_val);
+		h0.set_param(d.a_val, d.b_val, d.k_val);
 	}
 }
 
@@ -180,18 +176,9 @@ void CGeomdistrDoc::OnCalcPVal()
 {
 	display_cond = 2;
 	if (!generator)
-	{
-		if (type == 0)
-			generator = new Hypergeom_distr_inv(a_0, b_0, k_0);
-		else
-			generator = new Hypergeom_distr_bern(a_0, b_0, k_0);
+		generator = new Hypergeom_inv();
 
-		generator->set_param(a_0, b_0, k_0, n);
-		generator->set_hypothesis(a_1, b_1, k_1, sample_sz, samples_nmb, alpha);
-		generator->set_power_n_param(init_sz, steps_nmb, step_sz, power_n_sample_sz);
-	}
-		
-	generator->gen_p_levels();
+	processor.gen_p_levels(generator,h0);
 	UpdateAllViews(0);
 	return;
 }
@@ -200,61 +187,49 @@ void CGeomdistrDoc::OnRebuild()
 {
 	display_cond = 1;
 	if (!generator)
-	{
-		if (type == 0)
-			generator = new Hypergeom_distr_inv(a_0, b_0, k_0);
-		else
-			generator = new Hypergeom_distr_bern(a_0, b_0, k_0);
+		generator = new Hypergeom_inv();
 
-		generator->set_param(a_0, b_0, k_0, n);
-		generator->set_hypothesis(a_1, b_1, k_1, sample_sz, samples_nmb, alpha);
-		generator->set_power_n_param(init_sz, steps_nmb, step_sz, power_n_sample_sz);
-	}
-	generator->gen_distr(n);
-	generator->calc_distr();
-	generator->calc_p_value();
+	generator->gen_sample();
+	h0.calc_probs();
+	processor.calc_p_val(generator, h0);
 	UpdateAllViews(0);
 	return;
 }
 
 void CGeomdistrDoc::OnPvalparam()
 {
-	// TODO: Add your command handler code here
-	Dial_p_val d(type, sample_sz, samples_nmb, a_0, b_0, k_0, a_1, b_1, k_1, alpha);
+	Dial_p_val d(generator->get_type(), 
+				 processor.get_smpls_nmb(),
+				 processor.get_smpl_sz(), 
+				 generator->get_a(), 
+				 generator->get_b(), 
+				 generator->get_k(), 
+				 h0.get_a(), 
+				 h0.get_b(), 
+				 h0.get_k(), 
+				 processor.get_alpha());
 
 
 	if (d.DoModal() == IDOK)
 	{
-		a_0 = d.a;
-		b_0 = d.b;
-		k_0 = d.k;
-		a_1 = d.h_a;
-		b_1 = d.h_b;
-		k_1 = d.h_k;
-		sample_sz = d.sample_sz_p_val;
-		samples_nmb = d.sample_sz;
-		k_1 = d.h_k;
-		alpha = d.alpha;
-
-		if (type != d.type||!generator)
+		if (!generator || generator->get_type() != d.type)
 		{
+			int n = 100;
 			if (generator)
 			{
+				n = generator->get_n();
 				delete generator;
 				generator = nullptr;
 			}
 			if (d.type == 0)
-				generator = new Hypergeom_distr_inv(a_0, b_0, k_0);
+				generator = new Hypergeom_inv(d.a, d.b, d.k, n);
 			else
-				generator = new Hypergeom_distr_bern(a_0, b_0, k_0);
-
-			generator->set_power_n_param(init_sz, steps_nmb, step_sz, sample_sz);
-
+				generator = new Hypergeom_bern(d.a, d.b, d.k, n);
 		}
-		type = d.type;
-
-		generator->set_param(a_0, b_0, k_0, n);
-		generator->set_hypothesis(a_1, b_1, k_1,sample_sz, samples_nmb, alpha);
+		else
+			generator->set_param(d.a, d.b, d.k);
+		h0.set_param(d.h_a, d.h_b, d.h_k);
+		processor.set_p_lvls( d.sample_sz, d.samples_nmb, d.alpha);
 	}
 }
 
@@ -262,57 +237,48 @@ void CGeomdistrDoc::OnNPowerDep()
 {
 	display_cond = 3;
 	if (!generator)
-	{
-		if (type == 0)
-			generator = new Hypergeom_distr_inv(a_0, b_0, k_0);
-		else
-			generator = new Hypergeom_distr_bern(a_0, b_0, k_0);
-
-		generator->set_param(a_0, b_0, k_0, n);
-		generator->set_hypothesis(a_1, b_1, k_1, sample_sz, samples_nmb, alpha);
-		generator->set_power_n_param(init_sz, steps_nmb, step_sz, power_n_sample_sz);
-	}
+		generator = new Hypergeom_inv();
 	
-	generator->power_n_dependence();
+	processor.power_n_dependence(generator, h0);
 	UpdateAllViews(0);
 	return;
 }
 
 void CGeomdistrDoc::OnPowerdependenceonn()
 {
-	Dial_power_n d(type, a_0, b_0, k_0, a_1, b_1, k_1, init_sz,step_sz, steps_nmb, power_n_sample_sz,alpha);
+	Dial_power_n d(generator->get_type(), 
+				   generator->get_a(), 
+				   generator->get_b(), 
+				   generator->get_k(), 
+			       h0.get_a(), 
+		           h0.get_b(), 
+				   h0.get_k(), 
+				   processor.get_start_pos(),
+				   processor.get_step_sz(),
+				   processor.get_steps_nmb(),
+				   processor.get_power_n_samples_nmb(),
+				   processor.get_alpha());
 
 
 	if (d.DoModal() == IDOK)
 	{
-		a_0 = d.a;
-		b_0 = d.b;
-		k_0 = d.k;
-		a_1 = d.h_a;
-		b_1 = d.h_b;
-		k_1 = d.h_k;
-		init_sz = d.init_sz;
-		steps_nmb = d.steps_nmb;
-		power_n_sample_sz = d.sample_sz;
-		step_sz = d.step_sz;
-		alpha = d.alpha;
-
-		if (type != d.type||!generator)
+		if (!generator || generator->get_type() != d.type)
 		{
+			int n = 100;
 			if (generator)
 			{
+				n = generator->get_n();
 				delete generator;
 				generator = nullptr;
 			}
 			if (d.type == 0)
-				generator = new Hypergeom_distr_inv(a_0, b_0, k_0);
+				generator = new Hypergeom_inv(d.a, d.b, d.k, n);
 			else
-				generator = new Hypergeom_distr_bern(a_0, b_0, k_0);
+				generator = new Hypergeom_bern(d.a, d.b, d.k, n);
 		}
-		type = d.type;
-
-		generator->set_param(a_0, b_0, k_0, n);
-		generator->set_hypothesis(a_1, b_1, k_1, sample_sz, samples_nmb, alpha);
-		generator->set_power_n_param(init_sz, steps_nmb, step_sz, power_n_sample_sz);
+		else
+			generator->set_param(d.a, d.b, d.k);
+		h0.set_param(d.h_a, d.h_b, d.h_k);
+		processor.set_power_n(d.init_sz, d.steps_nmb, d.step_sz, d.sample_sz, d.alpha);
 	}
 }

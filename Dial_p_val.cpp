@@ -14,7 +14,7 @@ IMPLEMENT_DYNAMIC(Dial_p_val, CDialog)
 Dial_p_val::Dial_p_val(CWnd* pParent)
 	: CDialog(IDD_DIALOG2, pParent)
 	, type(FALSE)
-	, sample_sz_p_val(10'000)
+	, samples_nmb(10'000)
 	, sample_sz(100)
 	, a(10)
 	, b(10)
@@ -29,7 +29,7 @@ Dial_p_val::Dial_p_val(CWnd* pParent)
 Dial_p_val::Dial_p_val(BOOL _type, int _sample_sz_p_val, int _sample_sz, int _a, int _b, int _k, int _h_a, int _h_b, int _h_k, double _alpha, CWnd* pParent)
 	: CDialog(IDD_DIALOG2, pParent)
 	, type(_type)
-	, sample_sz_p_val(_sample_sz_p_val)
+	, samples_nmb(_sample_sz_p_val)
 	, sample_sz(_sample_sz)
 	, a(_a)
 	, b(_b)
@@ -49,7 +49,7 @@ void Dial_p_val::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Radio(pDX, IDC_RADIO1, type);
-	DDX_Text(pDX, IDC_EDIT7, sample_sz_p_val);
+	DDX_Text(pDX, IDC_EDIT7, samples_nmb);
 	DDX_Text(pDX, IDC_EDIT8, sample_sz);
 	DDX_Text(pDX, IDC_EDIT1, a);
 	DDX_Text(pDX, IDC_EDIT2, b);
@@ -75,7 +75,7 @@ void Dial_p_val::OnBnClickedOk()
 		AfxMessageBox(L"Parameter values are incorrect. Parameters must be positive and k<=a and k<=b.");
 	else if (sample_sz< 50 || sample_sz>10'000)
 		AfxMessageBox(L"select the number of simulated random variables between 100 and 10.000.");
-	else if (sample_sz_p_val < 1'000 || sample_sz_p_val>1'000'000)
+	else if (samples_nmb < 1'000 || samples_nmb>1'000'000)
 		AfxMessageBox(L"select the number of simulated random variables between 1.000 and 1.000.000.");
 	else
 		CDialog::OnOK();

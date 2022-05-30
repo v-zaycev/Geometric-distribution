@@ -84,11 +84,11 @@ void CGeomdistrView::OnDraw(CDC* pDC)
 	{
 		if (!pDoc->generator)
 			break;
-		if (!pDoc->generator->get_gen_distr())
+		if (!pDoc->generator->get_sim_freq())
 			break;
 
-		const double* th_distr = pDoc->generator->get_th_distr();
-		const int* mod_distr = pDoc->generator->get_gen_distr();
+		const double* th_distr = pDoc->h0.get_probs();
+		const int* mod_distr = pDoc->generator->get_sim_freq();
 		double max_val = 0;
 		const int k = pDoc->generator->get_k();
 		double column_1 = out_sp_x / (k + 1), column_2 = column_1 * 0.6;
@@ -97,8 +97,8 @@ void CGeomdistrView::OnDraw(CDC* pDC)
 		{
 			if (th_distr[i] > max_val)
 				max_val = th_distr[i];
-			if (mod_distr[i]/double(pDoc->n) > max_val)
-				max_val = mod_distr[i] / double(pDoc->n);
+			if (mod_distr[i]/double(pDoc->generator->get_n()) > max_val)
+				max_val = mod_distr[i] / double(pDoc->generator->get_n());
 		}
 
 		CBrush l1;
@@ -146,29 +146,29 @@ void CGeomdistrView::OnDraw(CDC* pDC)
 
 		pDC->SelectObject(brush_mod);
 		for (int i = 0; i < k+1; ++i)
-			pDC->Rectangle(x_0 + (i + 0.2) * column_1, y_1, x_0 + (i + 1 - 0.2) * column_1, y_1 - mod_distr[i] / double(pDoc->n) * out_sp_y / max_val);
+			pDC->Rectangle(x_0 + (i + 0.2) * column_1, y_1, x_0 + (i + 1 - 0.2) * column_1, y_1 - mod_distr[i] / double(pDoc->generator->get_n()) * out_sp_y / max_val);
 
 
 		for (int i = 0; i < k + 1; ++i)
 			pDC->TextOutW(x_0 + (i + 0.5) * column_1 - 10, y_1 + 10, std::to_wstring(i).data());
 
-		pDC->TextOutW(x_0-40, y_0, std::to_wstring(int(pDoc->n*max_val)).data());
+		pDC->TextOutW(x_0-40, y_0, std::to_wstring(int(pDoc->generator->get_n() *max_val)).data());
 		pDC->TextOutW(x_0 - 40, y_1, L"0");
 
 		pDC->TextOutW(wdz * 0.1, hgt * 0.05, L"d.f. = ");
-		pDC->TextOutW(wdz * 0.1 + 40, hgt * 0.05, std::to_wstring(pDoc->generator->get_d_f()).data());
+		pDC->TextOutW(wdz * 0.1 + 40, hgt * 0.05, std::to_wstring(pDoc->processor.get_d_f()).data());
 
 		pDC->TextOutW(wdz * 0.1 + 140, hgt * 0.05, L"chi^2 = ");
-		pDC->TextOutW(wdz * 0.1 + 190, hgt * 0.05, std::to_wstring(pDoc->generator->get_chi_sq()).substr(0,6).data());
+		pDC->TextOutW(wdz * 0.1 + 190, hgt * 0.05, std::to_wstring(pDoc->processor.get_chi_sq()).substr(0,6).data());
 
 		pDC->TextOutW(wdz * 0.1 + 290, hgt * 0.05, L"p-value = ");
-		pDC->TextOutW(wdz * 0.1 + 350, hgt * 0.05, std::to_wstring(pDoc->generator->get_p_val()).substr(0, 6).data());
+		pDC->TextOutW(wdz * 0.1 + 350, hgt * 0.05, std::to_wstring(pDoc->processor.get_p_val()).substr(0, 6).data());
 
 		break;
 	}
 	case 2: //p-levels
 	{
-		const double* p_levels = pDoc->generator->get_p_levels();
+		const double* p_levels = pDoc->processor.get_p_levels();
 		CBrush l1;
 		CBrush l2;
 		l1.CreateSolidBrush(pDoc->p_val_line);
@@ -232,7 +232,7 @@ void CGeomdistrView::OnDraw(CDC* pDC)
 			pDC->LineTo(x_0 + out_sp_x * double(i) / 100, y_1 - out_sp_y * p_levels[i]);
 		
 		pDC->TextOutW(wdz * 0.1, hgt * 0.05, L"Power = ");
-		pDC->TextOutW(wdz * 0.15, hgt * 0.05, std::to_wstring(pDoc->generator->get_power()).substr(0,5).data());
+		pDC->TextOutW(wdz * 0.15, hgt * 0.05, std::to_wstring(pDoc->processor.get_power()).substr(0,5).data());
 
 		break;
 	}
@@ -241,15 +241,15 @@ void CGeomdistrView::OnDraw(CDC* pDC)
 		if (!pDoc->generator)
 			break;
 
-		if (!pDoc->generator->get_power_n())
+		if (!pDoc->processor.get_power_n())
 			break;
 
-		const double* power_n_dep = pDoc->generator->get_power_n();
-		const int n_steps = pDoc->generator->get_steps();
-		double step = out_sp_x / n_steps;
+		const double* power_n_dep = pDoc->processor.get_power_n();
+		const int n_steps = pDoc->processor.get_steps_nmb();
+		double step = out_sp_x / (n_steps - 1);
 		double max_val = 0;
 
-		for (int i = 0; i < n_steps + 1; ++i)
+		for (int i = 0; i < n_steps; ++i)
 			if (power_n_dep[i] > max_val)
 				max_val = power_n_dep[i];
 
@@ -286,20 +286,20 @@ void CGeomdistrView::OnDraw(CDC* pDC)
 		pDC->MoveTo(x_0, y_0);
 		pDC->LineTo(x_0 - 5, y_0 + 5);
 
-		if (pDoc->a_0 == pDoc->a_1 && pDoc->b_0 == pDoc->b_1 && pDoc->k_0 == pDoc->k_1)
+		if (pDoc->generator->get_a() == pDoc->h0.get_a() && pDoc->generator->get_b() == pDoc->h0.get_b() && pDoc->generator->get_k() == pDoc->h0.get_k())
 		{
-			pDC->MoveTo(x_0, y_1 - out_sp_y * pDoc->alpha / max_val);
-			pDC->LineTo(x_1, y_1 - out_sp_y * pDoc->alpha / max_val);
-			pDC->TextOutW(x_0 - 50, y_1 - out_sp_y * pDoc->alpha / max_val, std::to_wstring(pDoc->generator->get_alpha()).substr(0, 5).data());
+			pDC->MoveTo(x_0, y_1 - out_sp_y * pDoc->processor.get_alpha() / max_val);
+			pDC->LineTo(x_1, y_1 - out_sp_y * pDoc->processor.get_alpha() / max_val);
+			pDC->TextOutW(x_0 - 50, y_1 - out_sp_y * pDoc->processor.get_alpha() / max_val, std::to_wstring(pDoc->processor.get_alpha()).substr(0, 5).data());
 		}
 
 		pDC->SelectObject(pen_power_n);
 		pDC->MoveTo(x_0, y_1 - out_sp_y * power_n_dep[0] / max_val);
-		for (int i = 1; i < n_steps + 1; ++i)
+		for (int i = 1; i < n_steps; ++i)
 			pDC->LineTo(x_0 + i * step, y_1 - out_sp_y * power_n_dep[i] / max_val);
 
-		for (int i = 0; i < n_steps + 1; ++i)
-			pDC->TextOutW(x_0 + i * step, y_1 + 10, std::to_wstring(pDoc->generator->get_init_pos()+i*pDoc->generator->get_step()).data());
+		for (int i = 0; i < n_steps; ++i)
+			pDC->TextOutW(x_0 + i * step, y_1 + 10, std::to_wstring(pDoc->processor.get_start_pos()+i*pDoc->processor.get_step_sz()).data());
 
 		pDC->TextOutW(x_0 - 50, y_0, std::to_wstring(max_val).substr(0, 5).data());
 		pDC->TextOutW(x_0 - 20, y_1, L"0");
