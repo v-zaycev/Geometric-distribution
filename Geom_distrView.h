@@ -21,6 +21,9 @@ public:
 // Overrides
 public:
 	virtual void OnDraw(CDC* pDC);  // overridden to draw this view
+	void OnDraw_basic(CDC* pDC);
+	void OnDraw_p_val(CDC* pDC);
+	void OnDraw_power(CDC* pDC);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 protected:
 

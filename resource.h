@@ -38,9 +38,12 @@
 #define IDC_EDIT3                       1004
 #define IDC_EDIT4                       1005
 #define IDC_EDIT5                       1006
+#define IDC_RADIO3                      1006
 #define IDC_EDIT6                       1007
 #define IDC_EDIT7                       1008
+#define IDC_RADIO5                      1009
 #define IDC_EDIT8                       1010
+#define IDC_RADIO4                      1011
 #define IDC_EDIT9                       1012
 #define IDC_EDIT10                      1013
 #define IDC_EDIT11                      1014

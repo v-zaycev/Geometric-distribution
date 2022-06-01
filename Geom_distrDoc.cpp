@@ -38,12 +38,13 @@ END_MESSAGE_MAP()
 
 CGeomdistrDoc::CGeomdistrDoc() noexcept
 {
-	generator = new Hypergeom_inv();
+	generator = new Hypergeom_inv(h1, 1000);
 }
 
 CGeomdistrDoc::~CGeomdistrDoc()
 {
-	delete generator;
+	if(generator)
+		delete generator;
 }
 
 
@@ -149,7 +150,7 @@ void CGeomdistrDoc::Dump(CDumpContext& dc) const
 
 void CGeomdistrDoc::OnSetparameters()
 {
-	Dial_basic d(generator->get_type(), generator->get_a(), generator->get_b(), generator->get_k(), generator->get_n());
+	Dial_basic d(generator->get_type(), h1.get_a(), h1.get_b(), h1.get_k(), generator->get_n());
 
 
 	if (d.DoModal() == IDOK)
@@ -161,13 +162,29 @@ void CGeomdistrDoc::OnSetparameters()
 				delete generator;
 				generator = nullptr;
 			}
-			if (d.func_type == 0)
-				generator = new Hypergeom_inv(d.a_val, d.b_val, d.k_val, d.n_val);
-			else
-				generator = new Hypergeom_bern(d.a_val, d.b_val, d.k_val, d.n_val);
+			switch (d.func_type)
+			{
+			case 0:
+			{
+				generator = new Hypergeom_inv(h1, d.n_val);
+				break;
+			}
+			case 1:
+			{
+				generator = new Hypergeom_bern(h1, d.n_val);
+				break;
+			}
+			case 2:
+			{
+				generator = new Hypergeom_table(h1, d.n_val);
+				break;
+			}
+			}
 		}
 		else
-			generator->set_all(d.a_val, d.b_val, d.k_val, d.n_val);
+			generator->set_sz(d.n_val);
+
+		h1.set_param(d.a_val, d.b_val, d.k_val);
 		h0.set_param(d.a_val, d.b_val, d.k_val);
 	}
 }
@@ -176,7 +193,7 @@ void CGeomdistrDoc::OnCalcPVal()
 {
 	display_cond = 2;
 	if (!generator)
-		generator = new Hypergeom_inv();
+		return;
 
 	processor.gen_p_levels(generator,h0);
 	UpdateAllViews(0);
@@ -187,10 +204,11 @@ void CGeomdistrDoc::OnRebuild()
 {
 	display_cond = 1;
 	if (!generator)
-		generator = new Hypergeom_inv();
+		return;
 
 	generator->gen_sample();
-	h0.calc_probs();
+//	h0.set_param(generator->get_a(), generator->get_b(), generator->get_k());
+	h0.calc_all_probs();
 	processor.calc_p_val(generator, h0);
 	UpdateAllViews(0);
 	return;
@@ -201,9 +219,9 @@ void CGeomdistrDoc::OnPvalparam()
 	Dial_p_val d(generator->get_type(), 
 				 processor.get_smpls_nmb(),
 				 processor.get_smpl_sz(), 
-				 generator->get_a(), 
-				 generator->get_b(), 
-				 generator->get_k(), 
+				 h1.get_a(),
+				 h1.get_b(),
+				 h1.get_k(),
 				 h0.get_a(), 
 				 h0.get_b(), 
 				 h0.get_k(), 
@@ -221,13 +239,26 @@ void CGeomdistrDoc::OnPvalparam()
 				delete generator;
 				generator = nullptr;
 			}
-			if (d.type == 0)
-				generator = new Hypergeom_inv(d.a, d.b, d.k, n);
-			else
-				generator = new Hypergeom_bern(d.a, d.b, d.k, n);
+			switch (d.type)
+			{
+			case 0:
+			{
+				generator = new Hypergeom_inv(h1, n);
+				break;
+			}
+			case 1:
+			{
+				generator = new Hypergeom_bern(h1, n);
+				break;
+			}
+			case 2:
+			{
+				generator = new Hypergeom_table(h1, n);
+				break;
+			}
+			}
 		}
-		else
-			generator->set_param(d.a, d.b, d.k);
+		h1.set_param(d.a, d.b, d.k);
 		h0.set_param(d.h_a, d.h_b, d.h_k);
 		processor.set_p_lvls( d.sample_sz, d.samples_nmb, d.alpha);
 	}
@@ -237,9 +268,9 @@ void CGeomdistrDoc::OnNPowerDep()
 {
 	display_cond = 3;
 	if (!generator)
-		generator = new Hypergeom_inv();
+		generator = new Hypergeom_inv(h1);
 	
-	processor.power_n_dependence(generator, h0);
+	processor.power_n_dependance(generator, h0);
 	UpdateAllViews(0);
 	return;
 }
@@ -247,9 +278,9 @@ void CGeomdistrDoc::OnNPowerDep()
 void CGeomdistrDoc::OnPowerdependenceonn()
 {
 	Dial_power_n d(generator->get_type(), 
-				   generator->get_a(), 
-				   generator->get_b(), 
-				   generator->get_k(), 
+				   h1.get_a(), 
+				   h1.get_b(),
+				   h1.get_k(),
 			       h0.get_a(), 
 		           h0.get_b(), 
 				   h0.get_k(), 
@@ -271,13 +302,27 @@ void CGeomdistrDoc::OnPowerdependenceonn()
 				delete generator;
 				generator = nullptr;
 			}
-			if (d.type == 0)
-				generator = new Hypergeom_inv(d.a, d.b, d.k, n);
-			else
-				generator = new Hypergeom_bern(d.a, d.b, d.k, n);
+			switch (d.type)
+			{
+			case 0:
+			{
+				generator = new Hypergeom_inv(h1, n);
+				break;
+			}
+			case 1:
+			{
+				generator = new Hypergeom_bern(h1, n);
+				break;
+			}
+			case 2:
+			{
+				generator = new Hypergeom_table(h1, n);
+				break;
+			}
+			}
 		}
-		else
-			generator->set_param(d.a, d.b, d.k);
+		
+		h1.set_param(d.a, d.b, d.k);
 		h0.set_param(d.h_a, d.h_b, d.h_k);
 		processor.set_power_n(d.init_sz, d.steps_nmb, d.step_sz, d.sample_sz, d.alpha);
 	}

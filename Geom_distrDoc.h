@@ -48,15 +48,10 @@ protected:
 
 public:
 	Hypergeom_distr h0;
+	Hypergeom_distr h1;
 	Hypergeom_sample* generator;
 	Chi_sq processor;
-	//int a_0=10, b_0=10, k_0=10;
-	//int a_1=10, b_1=10, k_1=10;
-	//int n=10'000;
-	//int samples_nmb = 100, sample_sz = 10'000;
-	//int init_sz = 50, steps_nmb = 10, step_sz = 100, power_n_sample_sz = 100;
-
-	//double alpha=0.05;
+	
 	int display_cond=0;
 	COLORREF th_distr = RGB(180, 180, 180);
 	COLORREF mod_distr = RGB(100, 100, 100);
