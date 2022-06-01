@@ -25,6 +25,9 @@ Hypergeom_distr::~Hypergeom_distr()
 
 void Hypergeom_distr::set_param(int _a, int _b, int _k)
 {
+	if (_a < 1 || _b<1 || _k<1 || _k>_a || _k>_b)
+		return;
+
 	a = _a;
 	b = _b;
 	k = _k;
@@ -181,7 +184,6 @@ Chi_sq::~Chi_sq()
 		delete[] power_n_dep;
 }
 
-
 /*!
 * \param smpl  ласс, генерирующий выборку с заданными H1 и методом
 * \param sz –аспределени€ соответствующее H0
@@ -230,7 +232,6 @@ double Chi_sq::calc_p_val(Hypergeom_sample* smpl, Hypergeom_distr &h0)
 
 	return p_val;
 }
-
 
 /*!
 * \param _sample_sz –азмер выборки, дл€ которой получаетс€ значение p-value

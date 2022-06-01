@@ -1,5 +1,3 @@
-#include "pch.h"
-
 void NORMAL( int type, double &x, double &p);
 double pNormal(double x);
 double xNormal(double prob);
